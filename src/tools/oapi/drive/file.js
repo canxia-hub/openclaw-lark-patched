@@ -306,12 +306,17 @@ function registerFeishuDriveFileTool(api) {
                     // MOVE FILE
                     // -----------------------------------------------------------------
                     case 'move': {
-                        log.info(`move: file_token=${p.file_token}, type=${p.type}, folder_token=${p.folder_token}`);
+                        // [yaqin-fix-20260906] 必填防御：undefined 会被 axios 丢弃造成 1061002 params error，不能依赖 schema
+                        if (!p.file_token || !p.type) {
+                            return (0, helpers_1.json)({ error: `move requires file_token and type (got file_token=${p.file_token ?? '(missing)'}, type=${p.type ?? '(missing)'})` });
+                        }
+                        const moveFolderToken = p.folder_token ?? p.parent_node ?? '';
+                        log.info(`move: file_token=${p.file_token}, type=${p.type}, folder_token=${moveFolderToken}`);
                         const res = await client.invoke('feishu_drive_file.move', (sdk, opts) => sdk.drive.file.move({
                             path: { file_token: p.file_token },
                             data: {
                                 type: p.type,
-                                folder_token: p.folder_token,
+                                folder_token: moveFolderToken,
                             },
                         }, opts), { as: 'user' });
                         (0, helpers_1.assertLarkOk)(res);
@@ -321,13 +326,17 @@ function registerFeishuDriveFileTool(api) {
                             success: true,
                             ...(data?.task_id ? { task_id: data.task_id } : {}),
                             file_token: p.file_token,
-                            target_folder_token: p.folder_token,
+                            target_folder_token: moveFolderToken,
                         });
                     }
                     // -----------------------------------------------------------------
                     // DELETE FILE
                     // -----------------------------------------------------------------
                     case 'delete': {
+                        // [yaqin-fix-20260906] 必填防御：缺 token 时直接报清晰错误，不再透传到 API 拿 not found
+                        if (!p.file_token || !p.type) {
+                            return (0, helpers_1.json)({ error: `delete requires file_token and type (got file_token=${p.file_token ?? '(missing)'}, type=${p.type ?? '(missing)'})` });
+                        }
                         log.info(`delete: file_token=${p.file_token}, type=${p.type}`);
                         const res = await client.invoke('feishu_drive_file.delete', (sdk, opts) => sdk.drive.file.delete({
                             path: { file_token: p.file_token },
@@ -395,15 +404,25 @@ function registerFeishuDriveFileTool(api) {
                                 data: {
                                     file_name: fileName,
                                     parent_type: 'explorer',
-                                    parent_node: p.parent_node || '',
+                                    parent_node: (p.parent_node || p.folder_token || ''), // [yaqin-fix-20260906] 兼容 folder_token 别名（此前被静默丢弃导致落根目录）
                                     size: fileSize,
                                     file: fileBuffer,
                                 },
                             }, opts), { as: 'user' });
-                            (0, helpers_1.assertLarkOk)(res);
-                            log.info(`upload: file_token=${res.data?.file_token}`);
+                            // [yaqin-fix-20260906] SDK uploadAll 已拆响应信封：直接返回 {file_token,...}（无 code 字段），
+                            // 旧代码读 res.data.file_token 永远 undefined → 假成功+丢真 token（回归实证：文件实际已完整落盘）。
+                            // 兼容两种形状：信封 {code,data:{file_token}} 与拆封体 {file_token}。
+                            const upData = res && typeof res === 'object' ? (res.data?.file_token ? res.data : res) : null;
+                            if (!upData?.file_token) {
+                                const bizCode = res?.code;
+                                if (bizCode !== undefined && bizCode !== 0) {
+                                    throw new Error(`upload_all failed (code=${bizCode}, msg=${res?.msg ?? ''})`);
+                                }
+                                throw new Error(`upload_all returned no file_token (fake success guard) [file=${fileName}, size=${fileSize}]`);
+                            }
+                            log.info(`upload: file_token=${upData.file_token}`);
                             return (0, helpers_1.json)({
-                                file_token: res.data?.file_token,
+                                file_token: upData.file_token,
                                 file_name: fileName,
                                 size: fileSize,
                             });
@@ -417,7 +436,7 @@ function registerFeishuDriveFileTool(api) {
                                 data: {
                                     file_name: fileName,
                                     parent_type: 'explorer',
-                                    parent_node: p.parent_node || '',
+                                    parent_node: (p.parent_node || p.folder_token || ''), // [yaqin-fix-20260906] 同 uploadAll：兼容 folder_token
                                     size: fileSize,
                                 },
                             }, opts), { as: 'user' });
