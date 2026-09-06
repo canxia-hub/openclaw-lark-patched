@@ -69,3 +69,16 @@
 ## 自研修复（超越 fork 的部分）
 
 - **deliverMessage 多图合并**（commit 9055a63）：fork 的 multiImageMode 只接在 outbound.sendPayload 上，而 message 工具发送走 actions.handleAction -> deliverMessage，原实现只读单数 media 字段，第二张图起被静默丢弃（fork 同样有此缺陷）。本包已改为读 params.mediaUrls 数组并在工具路径实现合并 post / 顺序回退。**官方或 fork 升级重放补丁时必须保留此修复。**
+
+## PR #1 补丁（2026-09-06 合入 merge commit 798614d，同日落地生产并活体验证）
+
+来源：外部贡献者 8u277suy3 的 PR #1（drive/im 文件接口四类修复），经 canxia-hub 逐行独立评审（含 SDK 1.73.3 拆封体根因验证、全仓 ~100 处 assertLarkOk 调用点误伤排查）后合并。
+
+| 文件 | 修复 |
+|------|------|
+| `src/core/api-error.js` | `assertLarkOk` 严格化：仅 `code === 0` 放行；缺 code/空响应显式抛错（旧 `!res.code` 放行是 upload 假成功链路根因） |
+| `src/tools/oapi/drive/file.js` | uploadAll 兼容拆封体/信封双形状提取 file_token + 无 token 硬失败；uploadAll/uploadPrepare 补 `folder_token` 别名透传（此前静默丢弃致落根目录）；move/delete 入口必填防御（缺 file_token/type 直接清晰报错，不再透传拿 1061002） |
+| `src/tools/oapi/im/resource.js` | `normalizeStreamError`：缓冲并 JSON.parse 流式错误体，暴露真实飞书 code/msg |
+| `src/tools/tat/im/resource.js` | 同上（bot 通道） |
+
+全部改动带 `[yaqin-fix-20260906]` 行内标记可 grep。生产实例（`.openclaw/npm/projects/larksuite-openclaw-lark-…/@larksuite/openclaw-lark`）已同步（哈希核对一致），旧版备份于同级 `openclaw-lark-patched-bak-20260906`。回归：upload(folder_token 落位)→list→download md5 回环→move→delete 5/5 通过（2026-09-06 11:2x 网关重启后活体验证）。**官方升级或重放补丁时必须保留本修复**（重点：SDK uploadAll 拆封体行为在 1.61 与 1.73.3 均确认存在，非版本特异）。
