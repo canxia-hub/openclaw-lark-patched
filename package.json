@@ -1,26 +1,42 @@
 {
-  "name": "@larksuite/openclaw-lark",
-  "version": "2026.7.16-p1",
-  "description": "OpenClaw Lark/Feishu channel plugin",
+  "name": "openclaw-lark-patched",
+  "version": "2026.7.16-p2",
+  "description": "Self-maintained fork of @larksuite/openclaw-lark with p1 compat patches (OpenClaw 2.x plugin SDK subpaths, CJS/ESM detection). Feishu/Lark channel plugin with doc/wiki/drive/task/calendar tools.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/canxia-hub/openclaw-lark-patched.git"
+  },
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      }
+      "types": "./index.d.ts",
+      "default": "./index.js"
     }
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "bin": {
     "openclaw-lark": "bin/openclaw-lark.js"
   },
   "files": [
-    "**/*"
+    "index.js",
+    "index.d.ts",
+    "secret-contract-api.js",
+    "secret-contract-api.d.ts",
+    "openclaw.plugin.json",
+    "bin/",
+    "src/",
+    "skills/",
+    "LICENSE",
+    "README.md",
+    "MANAGED.md"
   ],
-  "packageManager": "pnpm@10.32.1",
   "engines": {
     "node": ">=22"
+  },
+  "scripts": {
+    "check:tools": "node scripts/check-tools.js",
+    "prepack": "node scripts/check-package.mjs"
   },
   "dependencies": {
     "@larksuiteoapi/node-sdk": "^1.64.0",
@@ -58,8 +74,8 @@
       "quickstartAllowFrom": true
     },
     "install": {
-      "npmSpec": "@larksuite/openclaw-lark",
-      "localPath": "extensions/feishu",
+      "npmSpec": "openclaw-lark-patched",
+      "localPath": "extensions/openclaw-lark",
       "defaultChoice": "npm"
     }
   }
