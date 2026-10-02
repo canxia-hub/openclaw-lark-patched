@@ -2,9 +2,12 @@
 
 飞书官方 `@larksuite/openclaw-lark` 插件的**自维护补丁副本**。
 
+> **最新公告（2026-10-03）**：`main` 现为 **2026.7.16-p2**，已在 **OpenClaw 2026.9.7** 生产验证加载与全部 28 个工具功能。请直接克隆 `main` 使用；旧版 `main`（p1 打包形态）已废弃。
+
 - **基线版本**：`@larksuite/openclaw-lark@2026.7.16`（npm tarball，未改动的原件可用 `npm pack @larksuite/openclaw-lark@2026.7.16` 重新获取）
-- **运行环境**：OpenClaw 2026.8.2（2.0 系）
-- **补丁状态**：2026-09-03 由外部 Kimi 手工打补丁（4 个文件），本仓库收录补丁后的完整插件 + 补丁 diff 存档
+- **当前版本**：`openclaw-lark-patched@2026.7.16-p2`（tag `v2026.7.16-p2`）
+- **运行环境**：OpenClaw 2026.8.2 ~ 2026.9.7（2.0 系；2026.9.7 已验证）
+- **补丁状态**：2026-09-03 由外部 Kimi 手工打补丁（4 个文件）；2026-09 追加 p2 打包（fork 身份、入口统一、files 白名单、prepack 校验、npm 11 锁定）与 PR #1 drive/im 修复
 - **许可**：沿用上游 MIT（见 `LICENSE`，版权归 larksuite）
 
 ## 为什么需要补丁
@@ -27,13 +30,18 @@
 
 ## 部署方式（本机）
 
-本副本即当前生产在跑的代码，位于：
+生产以 p2 tarball 安装，加载目录为：
 
 ```
-~\.openclaw\npm\projects\larksuite-openclaw-lark-b3091cd05f__openclaw-generation__g-ee3c47544aa3ea3b\node_modules\@larksuite\openclaw-lark
+~\.openclaw\npm\projects\openclaw-lark-patched__openclaw-generation__*\node_modules\openclaw-lark-patched
 ```
 
-改动本仓库后同步该目录并重启网关即可。
+改动本仓库后重新 `npm pack` 安装并重启网关即可。
+
+## 版本线说明
+
+- `main` = 最新可用线（p2 打包 + PR #1 drive/im 修复，2026.9.7 已验证）
+- `npm-compat-2026-09` = p2 打包的基线分支（已并入 main）
 
 ## 目录结构
 
