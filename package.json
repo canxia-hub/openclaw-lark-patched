@@ -1,6 +1,6 @@
 {
   "name": "openclaw-lark-patched",
-  "version": "2026.7.16-p2",
+  "version": "2026.7.16-p2.local.20261111",
   "description": "Self-maintained fork of @larksuite/openclaw-lark with p1 compat patches (OpenClaw 2.x plugin SDK subpaths, CJS/ESM detection). Feishu/Lark channel plugin with doc/wiki/drive/task/calendar tools.",
   "license": "MIT",
   "repository": {
@@ -36,7 +36,8 @@
   },
   "scripts": {
     "check:tools": "node scripts/check-tools.js",
-    "prepack": "node scripts/check-package.mjs"
+    "prepack": "node scripts/check-package.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@larksuiteoapi/node-sdk": "^1.64.0",
